@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MONTH 12
 #define MAXAUTH 31
@@ -9,6 +10,12 @@ struct book {
     char title[MAXTITLE];
     double price;
 };
+
+/*
+ * A global variable is variable that can be accessed through out the program and changes made
+ * to global variable persist.
+ */
+int global_variable = 10;
 
 int main() {
     int month[MONTH] = {31,28,31,30,31,30,31,30,31,31,30,31};
@@ -42,6 +49,11 @@ int main() {
     printf("sizeof(double) is %td\n",sizeof(double));
     printf("sizeof(float) is %td\n",sizeof(float));
 
+    /*
+     * there is no default value for any pointer,it contains a garbage value,
+     * and there is no default value for anything within a struct(unless it is created statically)
+     * and there is no way to providing one.
+     */
     int i = 343.56456;
     printf("i is %d\n",i); // 343
     int j = 2334;
@@ -76,9 +88,66 @@ int main() {
     printf("%d\n",*(*(array2+1)+1));
 
 
-    struct book library;
+    struct book library = {
+            "Baron Schwartz",
+            "High Performance MySQL",
+            16.95
+    };
+
+
+    /*
+     * the difference is that char* line = "hello world" will place "hello world" in the read-only parts of the memory,
+     * and the compiler allocates a static anonymous array to hold the string literal,and making line a pointer
+     * to that makes any writing operation on this memory illegal,
+     * while doing char s[] = "hello world"; puts the literal string in read-only memory and copies the string to newly
+     * allocated memory on the stack,thus making s[0] = 'j' legal.
+     */
+    char* line = "just another perl hacker"; // static const char __secret_anonymous_array[] = "just another perl hacker";
+    printf("character at the first place is %c\n",*line); // j
+    printf("character at the second place is %c\n",*(line+1)); // u
+    char line_array[] = "just another perl hacker";
+    printf("line array is %s\n",line_array);
+    printf("line is %s\n",line);
 
     printf("sizeof(struct book) is %td\n", sizeof(library)); // 80
+    printf("book title is %c\n",*(library.title+1));
+    printf("book author is %s\n",library.author);
+    printf("book price is %f\n",library.price);
+
+    struct book library1;
+    struct book* library_pt;
+    printf("library1 default memory address is %p\n",&library); // varies in every execution
+    if(library1.title == NULL) {
+        printf("null\n");
+    } else {
+        printf("not null\n");
+    }
+    printf("book");
+
+    /*
+     * malloc() and calloc() both create a contiguous block of memory
+     * the only difference between malloc() and calloc() is that,malloc() allocates A SINGLE BLOCK OF MEMORY
+     * whereas calloc() allocates multiple blocks memory each of the same size and set all bytes to zero.
+     * the malloc function allocates space for an object whose size is specified by size and whose value is indeterminate,
+     * however,the operating system often initialize this memory space to 0,you can use rather calloc() to
+     * be sure that every bits are set to 0
+     */
+    struct book* struct_ptr = (struct book* ) malloc(3 * sizeof(struct book));
+    struct book* struct_ptr2 = (struct book* )calloc(3, sizeof(struct book));
+    printf("default price is %d\n",*struct_ptr->title); // 0
+    printf("default price is %d\n",*struct_ptr2->title); // 0
+
+    struct book_list {
+        struct book item;
+        struct book_list* next;
+    };
+
+    printf("sizeof(struct book) is %td\n", sizeof(struct book)); // 80
+    printf("sizeof(struct book_list) is %td\n", sizeof(struct book_list)); // 88
+    printf("sizeof(int*) is %td\n", sizeof(int*)); // 8
+
+    change_global_variable();
+    printf("global variable is %d\n",global_variable); // 100
 
 }
 
@@ -87,4 +156,24 @@ void interchange(int* x,int* y) {
     temp = *x;
     *x = *y;
     *y = temp;
+}
+/*
+ * In C,functions are global by default,The "static" key word before a function makes it static,
+ * unlike global function in C,access to static functions is restricted to the file where they are
+ * declared.
+ *
+ *
+ *
+ * Static variables have a property of preserving their value even after they are out of their scope!
+ * they remains in memory while the program is running.
+ * Static variables are allocated memory in (initialized)data segment,not stack segment.
+ * Static variables like global variables are initialized as 0 if not initialized explicitly.
+ * Static variables can only be initialized using constant literals.
+ */
+static void static_function(){
+    printf("static function");
+}
+
+void change_global_variable() {
+    global_variable = 100;
 }
